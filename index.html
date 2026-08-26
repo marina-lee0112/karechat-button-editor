@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Karechat 버튼 그룹 편집기</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
+<style>
+  :root{
+    --primary:#000000; --canvas:#FFFFFF; --on-primary:#FFFFFF;
+    --inverse-canvas:#2A2D3A; --inverse-ink:#FFFFFF;
+    --ink:#000000; --ink-soft:rgba(0,0,0,.70);
+    --surface-soft:#F5F5F5; --accent-yellow:#FBBF24;
+    --hairline:#E5E7EB; --hairline-soft:#F0F0F0; --error:#DC2626;
+    --xs:8px; --sm:12px; --md:16px; --lg:24px; --xl:32px; --xxl:48px;
+    --r-sm:6px; --r-md:12px; --r-lg:16px; --r-pill:50px;
+    font-family:'Pretendard Variable',Pretendard,Inter,system-ui,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--canvas);color:var(--ink);-webkit-font-smoothing:antialiased;line-height:1.55}
+  .wrap{max-width:1080px;margin:0 auto;padding:var(--xl) var(--lg) var(--xxl)}
+
+  /* Header */
+  header{background:var(--inverse-canvas);color:var(--inverse-ink);border-radius:var(--r-lg);padding:var(--xl);margin-bottom:var(--xl)}
+  header .eyebrow{font-size:12px;font-weight:500;letter-spacing:.24px;color:var(--accent-yellow);margin-bottom:var(--xs)}
+  header h1{font-size:28px;font-weight:700;line-height:1.4;letter-spacing:-.28px}
+  header p{font-size:16px;color:rgba(255,255,255,.8);margin-top:var(--sm)}
+
+  /* Toolbar */
+  .toolbar{display:flex;gap:var(--sm);flex-wrap:wrap;margin-bottom:var(--lg);align-items:center}
+  .toolbar .stat{font-size:14px;color:var(--ink-soft);margin-right:auto}
+
+  /* Buttons */
+  .btn{font-size:16px;font-weight:600;line-height:1.5;border-radius:var(--r-pill);padding:var(--sm) var(--lg);border:1px solid var(--primary);cursor:pointer;background:var(--canvas);color:var(--ink);transition:all .2s ease;min-height:44px}
+  .btn-primary{background:var(--primary);color:var(--on-primary)}
+  .btn-primary:hover{opacity:.85}
+  .btn-secondary:hover{background:var(--surface-soft)}
+  .btn-sm{font-size:14px;padding:8px 16px;min-height:38px}
+
+  /* Group card */
+  .group{border:1px solid var(--hairline);border-radius:var(--r-lg);margin-bottom:var(--md);overflow:hidden}
+  .group.off{opacity:.55}
+  .group-head{display:flex;align-items:center;gap:var(--sm);padding:var(--lg);background:var(--surface-soft)}
+  .group-head h2{font-size:18px;font-weight:700;flex:1}
+  .group-body{padding:var(--md) var(--lg) var(--lg)}
+
+  /* Button row */
+  .row{display:flex;align-items:center;gap:var(--sm);padding:var(--sm) 0;border-bottom:1px solid var(--hairline-soft)}
+  .row:last-child{border-bottom:none}
+  .row.off .label-input,.row.off .url-input{opacity:.45}
+  .label-txt{font-size:16px;font-weight:500;width:160px;flex-shrink:0}
+  .label-input{font-size:16px;font-weight:500;width:160px;flex-shrink:0;font-family:inherit;padding:var(--sm) var(--md);border:1px solid var(--hairline);border-radius:var(--r-md);min-height:44px;color:var(--ink)}
+  .label-input:focus{outline:none;border-color:var(--primary)}
+  .url-input{flex:1;min-width:120px;font-size:14px;font-family:inherit;padding:var(--sm) var(--md);border:1px solid var(--hairline);border-radius:var(--r-md);min-height:44px;color:var(--ink)}
+  .url-input:focus{outline:none;border-color:var(--primary)}
+  .url-input.locked{background:var(--surface-soft);color:var(--ink-soft);cursor:not-allowed}
+  .url-input.invalid{border-color:var(--error)}
+  .err-msg{font-size:12px;color:var(--error);font-weight:500;width:100%;flex-basis:100%;margin:2px 0 0 56px}
+  .banner{display:flex;align-items:center;gap:var(--xs);padding:var(--sm) var(--md);border-radius:var(--r-md);font-size:14px;font-weight:600;margin-bottom:var(--md)}
+  .banner.ok{background:var(--surface-soft);color:var(--ink-soft)}
+  .banner.bad{background:#FEF2F2;color:var(--error)}
+  .empty{border:1px dashed var(--hairline);border-radius:var(--r-lg);padding:var(--xxl) var(--lg);text-align:center;color:var(--ink-soft);font-size:16px}
+  .link-btn{background:none;border:none;color:var(--ink);font-weight:600;font-size:14px;text-decoration:underline;cursor:pointer;padding:0}
+  .icon-btn{width:44px;height:44px;flex-shrink:0;display:flex;align-items:center;justify-content:center;border:1px solid var(--hairline);border-radius:var(--r-md);background:var(--canvas);cursor:pointer;transition:background .2s}
+  .icon-btn:hover{background:var(--surface-soft)}
+  .icon-btn:disabled{opacity:.35;cursor:not-allowed}
+  .icon-btn svg{width:20px;height:20px;stroke:var(--ink);fill:none;stroke-width:1.8}
+  .open-btn{width:auto;gap:6px;padding:0 var(--md);font-size:14px;font-weight:600;color:var(--ink);white-space:nowrap}
+  .open-btn svg{width:16px;height:16px}
+
+  /* Toggle */
+  .toggle{position:relative;width:46px;height:26px;flex-shrink:0;cursor:pointer}
+  .toggle input{opacity:0;width:0;height:0;position:absolute}
+  .track{position:absolute;inset:0;background:var(--hairline);border-radius:var(--r-pill);transition:background .2s}
+  .knob{position:absolute;top:3px;left:3px;width:20px;height:20px;background:#fff;border-radius:50%;transition:transform .2s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+  .toggle input:checked + .track{background:var(--accent-yellow)}
+  .toggle input:checked + .track + .knob{transform:translateX(20px)}
+
+  /* Output */
+  .output{margin-top:var(--xl)}
+  .output h2{font-size:18px;font-weight:700;margin-bottom:var(--sm)}
+  textarea{width:100%;min-height:280px;font-family:'SFMono-Regular',Consolas,monospace;font-size:13px;line-height:1.5;padding:var(--md);border:1px solid var(--hairline);border-radius:var(--r-md);background:var(--inverse-canvas);color:var(--inverse-ink);resize:vertical}
+  .toast{position:fixed;bottom:var(--xl);left:50%;transform:translateX(-50%) translateY(20px);background:var(--primary);color:var(--on-primary);padding:var(--sm) var(--lg);border-radius:var(--r-pill);font-size:14px;font-weight:600;opacity:0;pointer-events:none;transition:all .25s ease}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+  @media(max-width:560px){
+    .label-input{width:auto;flex:1}
+    .row{flex-wrap:wrap}
+    .url-input{flex-basis:100%;order:5}
+    .btn{flex:1}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">KARECHAT · 케어챗</div>
+    <h1>버튼 그룹 편집기</h1>
+    <p>그룹·버튼별 노출 토글과 URL을 수정하고, JSON으로 다시 내보내세요.</p>
+  </header>
+
+  <div class="output" style="margin-top:0;margin-bottom:var(--xl)">
+    <h2>JSON 입력</h2>
+    <p style="font-size:14px;color:var(--ink-soft);margin:var(--xs) 0 var(--sm)">편집할 JSON을 여기에 붙여넣으면 아래 화면에 반영됩니다. <button class="link-btn" id="sampleBtn">예시 데이터 넣기</button></p>
+    <textarea id="jsonIn" spellcheck="false" style="min-height:160px"></textarea>
+  </div>
+
+  <div class="toolbar">
+    <span class="stat" id="stat"></span>
+    <button class="btn btn-secondary btn-sm" id="resetBtn">초기화</button>
+  </div>
+
+  <div id="banner"></div>
+  <div id="groups"></div>
+
+  <div class="output">
+    <h2>JSON 출력</h2>
+    <textarea id="jsonOut" spellcheck="false" readonly></textarea>
+    <div class="toolbar" style="margin-top:var(--sm)">
+      <button class="btn btn-primary btn-sm" id="copyBtn">클립보드에 복사</button>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const ICONS = {
+  open:'<svg viewBox="0 0 24 24"><path d="M14 5h5v5M19 5l-9 9M19 13v6H5V5h6"/></svg>'
+};
+
+const SAMPLE = [{"group":"병원 방문 전 안내","on":true,"buttons":[{"label":"병원 오시는 길","on":true,"url":"케어챗 기본 제공 (카카오맵 연결)"},{"label":"병원 층별 안내","on":true,"url":"https://www.kakaohealthcare.com"},{"label":"주차 안내","on":true,"url":"https://www.kakaohealthcare.com"}]},{"group":"병원 바로가기","on":true,"buttons":[{"label":"병원 홈페이지","on":true,"url":"https://www.kakaohealthcare.com"},{"label":"병원 유튜브","on":true,"url":"https://www.kakaohealthcare.com"},{"label":"병원 인스타그램","on":true,"url":"https://www.kakaohealthcare.com"},{"label":"병원 블로그","on":false,"url":"https://www.kakaohealthcare.com"},{"label":"병원 페이스북","on":false,"url":""}]},{"group":"진료 안내","on":true,"buttons":[{"label":"외래진료 안내","on":true,"url":"https://www.kakaohealthcare.com"},{"label":"입원/퇴원 안내","on":true,"url":"https://www.kakaohealthcare.com"},{"label":"주요 전화번호 안내","on":true,"url":"https://www.kakaohealthcare.com"}]},{"group":"검진 안내","on":true,"buttons":[{"label":"종합검진 안내","on":true,"url":"https://www.kakaohealthcare.com"},{"label":"검진 프로그램 안내","on":true,"url":"https://www.kakaohealthcare.com"},{"label":"검진 주의사항","on":true,"url":"케어챗 기본 제공 (콘텐츠 연결)"}]},{"group":"장례식장 안내","on":true,"buttons":[{"label":"장례식장 이용안내","on":true,"url":"https://www.kakaohealthcare.com"},{"label":"장례 절차 및 비용","on":true,"url":"https://www.kakaohealthcare.com"},{"label":"장례식장 주차 안내","on":true,"url":"https://www.kakaohealthcare.com"}]},{"group":"병원 교육 콘텐츠","on":true,"buttons":[{"label":"건강 교육 콘텐츠 영상","on":true,"url":"https://www.kakaohealthcare.com"},{"label":"건강 교육 강좌","on":true,"url":"https://www.kakaohealthcare.com"}]},{"group":"소식 및 소통","on":true,"buttons":[{"label":"공지사항","on":true,"url":"https://www.kakaohealthcare.com"},{"label":"고객의 소리","on":true,"url":"https://www.kakaohealthcare.com"}]}];
+
+let data = [];
+
+const isLocked = u => /^케어챗 기본 제공/.test(u || '');
+
+// returns error string or '' for a button
+function validateBtn(grp,btn){
+  if(!btn.on||!grp.on)return '';        // off면 검사 안 함
+  const u=(btn.url||'').trim();
+  if(isLocked(u))return '';             // 케어챗 기본 제공은 예외
+  if(!u)return 'on 상태에서는 URL 입력이 필수입니다';
+  if(!/^https?:\/\/.+/i.test(u))return 'URL은 http:// 또는 https:// 로 시작해야 합니다';
+  return '';
+}
+
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),1800)}
+
+function updateStat(){
+  let g=data.length, b=0, on=0;
+  data.forEach(grp=>grp.buttons.forEach(btn=>{b++;if(btn.on&&grp.on)on++}));
+  document.getElementById('stat').textContent=`그룹 ${g}개 · 버튼 ${b}개 · 노출 중 ${on}개`;
+}
+
+function syncOutput(){document.getElementById('jsonOut').value=JSON.stringify(data,null,2)}
+
+function render(){
+  const root=document.getElementById('groups');
+  root.innerHTML='';
+  if(!Array.isArray(data)||data.length===0){
+    root.innerHTML='<div class="empty">JSON을 입력하면 편집 화면이 표시됩니다.</div>';
+    updateStat();syncOutput();updateBanner();return;
+  }
+  data.forEach((grp,gi)=>{
+    const card=document.createElement('div');
+    card.className='group'+(grp.on?'':' off');
+    card.innerHTML=`
+      <div class="group-head">
+        <h2>${grp.group}</h2>
+        <label class="toggle">
+          <input type="checkbox" ${grp.on?'checked':''} data-g="${gi}" data-type="group">
+          <span class="track"></span><span class="knob"></span>
+        </label>
+      </div>
+      <div class="group-body"></div>`;
+    const body=card.querySelector('.group-body');
+    grp.buttons.forEach((btn,bi)=>{
+      const row=document.createElement('div');
+      row.className='row'+(btn.on?'':' off');
+      const locked=isLocked(btn.url);
+      const err=validateBtn(grp,btn);
+      row.innerHTML=`
+        <label class="toggle">
+          <input type="checkbox" ${btn.on?'checked':''} data-g="${gi}" data-b="${bi}" data-type="btn">
+          <span class="track"></span><span class="knob"></span>
+        </label>
+        <input class="label-input" value="${(btn.label||'').replace(/"/g,'&quot;')}" placeholder="메뉴명" data-g="${gi}" data-b="${bi}" data-type="label">
+        <input class="url-input ${locked?'locked':''} ${err?'invalid':''}" value="${(btn.url||'').replace(/"/g,'&quot;')}"
+          ${locked?'readonly':''} placeholder="URL 입력" data-g="${gi}" data-b="${bi}" data-type="url">
+        <button class="icon-btn open-btn" title="웹에서 보기" data-g="${gi}" data-b="${bi}" data-type="open"
+          ${(!btn.url||locked)?'disabled':''}>${ICONS.open}<span>웹에서 보기</span></button>
+        ${err?`<span class="err-msg">${err}</span>`:''}`;
+      body.appendChild(row);
+    });
+    root.appendChild(card);
+  });
+  updateStat();
+  syncOutput();
+  updateBanner();
+}
+
+function updateBanner(){
+  const b=document.getElementById('banner');
+  if(!Array.isArray(data)||data.length===0){b.className='banner ok';b.textContent='JSON 입력 대기 중';return;}
+  let errs=0;
+  data.forEach(grp=>grp.buttons.forEach(btn=>{if(validateBtn(grp,btn))errs++}));
+  if(errs===0){b.className='banner ok';b.textContent='검증 통과 · 오류 없음';}
+  else{b.className='banner bad';b.textContent=`검증 오류 ${errs}건 · 수정이 필요합니다`;}
+}
+
+document.getElementById('groups').addEventListener('change',e=>{
+  const t=e.target.dataset.type, gi=+e.target.dataset.g, bi=+e.target.dataset.b;
+  if(t==='group'){data[gi].on=e.target.checked;render()}
+  else if(t==='btn'){
+    if(e.target.checked){
+      const onCount=data[gi].buttons.filter(b=>b.on).length;
+      if(onCount>=MAX_ON){
+        alert('최대 3개까지만 선택 가능합니다.');
+        e.target.checked=false;
+        return;
+      }
+    }
+    data[gi].buttons[bi].on=e.target.checked;render()
+  }
+});
+document.getElementById('groups').addEventListener('input',e=>{
+  if(e.target.dataset.type==='label'){
+    const gi=+e.target.dataset.g, bi=+e.target.dataset.b;
+    data[gi].buttons[bi].label=e.target.value;
+    syncOutput();
+    return;
+  }
+  if(e.target.dataset.type==='url'){
+    const gi=+e.target.dataset.g, bi=+e.target.dataset.b;
+    data[gi].buttons[bi].url=e.target.value;
+    const openBtn=e.target.parentElement.querySelector('[data-type="open"]');
+    openBtn.disabled=!e.target.value;
+    // 해당 행만 검증 갱신 (입력 포커스 유지)
+    const err=validateBtn(data[gi],data[gi].buttons[bi]);
+    e.target.classList.toggle('invalid',!!err);
+    let msg=e.target.parentElement.querySelector('.err-msg');
+    if(err){if(!msg){msg=document.createElement('span');msg.className='err-msg';e.target.parentElement.appendChild(msg);}msg.textContent=err;}
+    else if(msg){msg.remove();}
+    updateStat();
+    syncOutput();
+    updateBanner();
+  }
+});
+document.getElementById('groups').addEventListener('click',e=>{
+  const b=e.target.closest('[data-type="open"]');
+  if(b&&!b.disabled){
+    const url=data[+b.dataset.g].buttons[+b.dataset.b].url;
+    window.open(url.startsWith('http')?url:'https://'+url,'_blank');
+  }
+});
+
+document.getElementById('jsonIn').addEventListener('input',e=>{
+  const raw=e.target.value.trim();
+  if(!raw){data=blankState();render();e.target.style.borderColor='var(--hairline)';return;}
+  try{const parsed=JSON.parse(raw);data=normalize(parsed);render();e.target.style.borderColor='var(--hairline)'}
+  catch{e.target.style.borderColor='var(--error)'}
+});
+document.getElementById('sampleBtn').addEventListener('click',()=>{
+  const ta=document.getElementById('jsonIn');
+  ta.value=JSON.stringify(SAMPLE,null,2);
+  ta.dispatchEvent(new Event('input',{bubbles:true}));
+});
+document.getElementById('copyBtn').addEventListener('click',()=>{
+  navigator.clipboard.writeText(document.getElementById('jsonOut').value).then(()=>toast('복사되었습니다'));
+});
+document.getElementById('resetBtn').addEventListener('click',()=>{
+  if(!confirm('모든 편집 내용을 초기 상태로 되돌립니다. 계속할까요?'))return;
+  document.getElementById('jsonIn').value='';
+  data=blankState();
+  render();
+  toast('초기화되었습니다');
+});
+
+const MAX_ON = 3;
+const SLOTS = 3;
+
+// 모든 그룹이 3개 버튼 슬롯을 갖도록 정규화 (부족하면 빈 off 슬롯 추가, 초과분은 유지)
+// 원래 버튼이 3개 이하인 그룹은 실제 버튼(라벨 있는)을 모두 on으로 맞춤
+function normalize(list){
+  return list.map(grp=>{
+    let buttons=[...grp.buttons];
+    if(buttons.length<=SLOTS){
+      buttons=buttons.map(b=>b.label&&b.label.trim()?{...b,on:true}:b);
+    }
+    while(buttons.length<SLOTS){buttons.push({label:'',on:false,url:''});}
+    return {...grp,buttons};
+  });
+}
+
+// 항목 틀은 보이되 URL은 빈 값인 초기 상태
+function blankState(){
+  return normalize(SAMPLE).map(grp=>({...grp,buttons:grp.buttons.map(btn=>({...btn,url:''}))}));
+}
+data=blankState();
+render();
+</script>
+</body>
+</html>
